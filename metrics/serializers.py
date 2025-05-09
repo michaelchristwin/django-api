@@ -1,0 +1,68 @@
+# serializers.py
+from rest_framework import serializers
+from .models import Project, Category, ProjectMetric, AggregateMetric
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description']
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'logo_url', 'created_at', 'updated_at']
+
+
+class ProjectMetricSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer(read_only=True)
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(), 
+        source='project', 
+        write_only=True
+    )
+    category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), 
+        source='category', 
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model = ProjectMetric
+        fields = ['id', 'name', 'value', 'project', 'project_id', 'category', 'category_id', 'timestamp']
+
+
+class AggregateMetricSerializer(serializers.ModelSerializer):
+    categories = CategorySerializer(many=True, read_only=True)
+    category_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        source='categories',
+        write_only=True,
+        many=True,
+        required=False
+    )
+
+    class Meta:
+        model = AggregateMetric
+        fields = ['id', 'name', 'description', 'aggregation_method', 'categories', 'category_ids']
+
+
+class AggregateMetricDetailSerializer(serializers.ModelSerializer):
+    aggregated_value = serializers.SerializerMethodField()
+    contributing_projects = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AggregateMetric
+        fields = ['id', 'name', 'description', 'aggregation_method', 'aggregated_value', 'contributing_projects']
+    
+    def get_aggregated_value(self, obj):
+        return obj.get_aggregated_value()
+    
+    def get_contributing_projects(self, obj):
+        projects = obj.get_contributing_projects()
+        return [{'id': p.id, 'name': p.name, 'logo_url': p.logo_url} for p in projects]
+
+
