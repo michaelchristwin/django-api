@@ -7,7 +7,7 @@ databases:
 services:
   - type: web
     plan: free
-    name: mysite
+    name: carboncopy
     runtime: python
     buildCommand: './build.sh'
     startCommand: 'python -m gunicorn carboncopy.asgi:application -k uvicorn.workers.UvicornWorker' 
