@@ -2,8 +2,8 @@
 # Everything below will override our standard settings:
 # Parse database configuration from $DATABASE_URL
 
+import os
 import dj_database_url
-
 from .base import *
 
 DEBUG = False
