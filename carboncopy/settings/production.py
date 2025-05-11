@@ -8,6 +8,8 @@ from .base import *
 
 DEBUG = False
 
+ALLOWED_HOSTS = ['*']
+
 # Replace the SQLite DATABASES configuration with PostgreSQL:
 DATABASES = {
     'default': dj_database_url.config(
