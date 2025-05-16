@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Project, Category, ProjectMetric, AggregateMetric
+from .models import Project, Category, ProjectMetric, ProjectMetricMeta, ProjectMetricDelta, AggregateMetric
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'logo_url', 'created_at', 'updated_at']
 
 
-class ProjectMetricSerializer(serializers.ModelSerializer):
+class ProjectMetricMetaSerializer(serializers.ModelSerializer):
     project = ProjectSerializer(read_only=True)
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(), 
@@ -31,9 +31,22 @@ class ProjectMetricSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = ProjectMetric
-        fields = ['id', 'name', 'value', 'project', 'project_id', 'category', 'category_id', 'timestamp']
+        model = ProjectMetricMeta
+        fields = ['id', 'name', 'project', 'project_id', 'category', 'category_id']
 
+class ProjectMetricSerializer(serializers.ModelSerializer):
+    meta = ProjectMetricMetaSerializer(read_only=True)
+
+    class Meta:
+        model = ProjectMetric
+        fields = ['meta', 'value', 'timestamp']
+
+class ProjectMetricDeltaSerializer(serializers.ModelSerializer):
+    meta = ProjectMetricMetaSerializer(read_only=True)
+
+    class Meta:
+        model = ProjectMetricDelta
+        fields = ['meta', 'value', 'timestamp']
 
 class AggregateMetricSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True, read_only=True)

@@ -18,6 +18,7 @@ class Category(models.Model):
     """Model representing categories for metrics."""
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
+    unit = models.CharField(max_length=10)
 
     def __str__(self):
         return self.name
@@ -26,20 +27,61 @@ class Category(models.Model):
         verbose_name_plural = "Categories"
 
 
+class ProjectMetricMeta(models.Model):
+    """Model representing metrics metadata associated with projects."""
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='meta')
+    name = models.CharField(max_length=255)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='meta')
+    source = models.CharField(max_length=255)
+    url = models.URLField(max_length=1000)
+    conversion_ratio = models.FloatField()
+
+    class Meta:
+        unique_together = ('project', 'name')
+
+    def __str__(self):
+        return f"{self.project.name} - {self.name}"
+    
+    def save(self, **kwargs):
+        if self.value:
+            self.value *= self.conversion_ratio # converts metric value to standard unit
+            return super().save(update_fields=['value', 'timestamp'])
+        return super().save(*args, **kwargs)
+
 class ProjectMetric(models.Model):
     """Model representing metrics associated with projects."""
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='metrics')
-    name = models.CharField(max_length=255)
+    meta = models.ForeignKey(ProjectMetricMeta, on_delete=models.CASCADE, related_name='metrics')
     value = models.FloatField()
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='metrics')
     timestamp = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        unique_together = ('project', 'name', 'timestamp')
+        unique_together = ['timestamp']
+        get_latest_by = 'timestamp'
 
     def __str__(self):
-        return f"{self.project.name} - {self.name}: {self.value}"
+        return f"{self.meta.project.name} - {self.meta.name} - Metric: {self.value}"
 
+    def save(self, *args, **kwargs):
+        if not self.value: return super().save(*args, **kwargs)
+        
+        self.value *= self.conversion_ratio  # converts metric value to standard unit
+        prev = ProjectMetric.objects.values_list('value', flat=True).get(pk=self.pk)  # pull the existing value straight from the DB
+        # wrap in a transaction so that both the save and the delta‐log happen atomically
+        with transaction.atomic():
+            super().save(update_fields=['value', 'timestamp'], *args, **kwargs)
+            ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - prev)
+
+class ProjectMetricDelta(models.Model):
+    """Model representing metrics delta associated with projects."""
+    meta = models.ForeignKey(ProjectMetricMeta, on_delete=models.CASCADE, related_name='deltas')
+    value = models.FloatField()
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        unique_together = ['timestamp']
+
+    def __str__(self):
+        return f"{self.metric.meta.project.name} - {self.name} - Delta: {self.value}"
 
 class AggregateMetric(models.Model):
     """Model representing aggregate metrics across multiple projects."""
