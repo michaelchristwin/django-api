@@ -1,6 +1,9 @@
 from django.db import models
 from django.utils import timezone
 
+CATEGORIES = ('solar', 'carbon', 'cookstove', 'biodiversity')
+SOURCES = {'client': 'Project supplied', 'dune': 'Dune API', 'graphql': 'Subghraph index', 'near': 'Near blockchain', 'regen': 'Regen blockchain'}
+
 
 class Project(models.Model):
     """Model representing a project with metadata."""
@@ -32,8 +35,10 @@ class ProjectMetricMeta(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='meta')
     name = models.CharField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='meta')
-    source = models.CharField(max_length=255)
+    source = models.CharField(max_length=255, default=SOURCES['client'], choices=SOURCES)
     url = models.URLField(max_length=1000)
+    query = model.CharField(max_length=1000)
+    json_key = model.CharField(max_length=1000)
     conversion_ratio = models.FloatField()
 
     class Meta:
@@ -41,16 +46,12 @@ class ProjectMetricMeta(models.Model):
 
     def __str__(self):
         return f"{self.project.name} - {self.name}"
-    
-    def save(self, **kwargs):
-        if self.value:
-            self.value *= self.conversion_ratio # converts metric value to standard unit
-            return super().save(update_fields=['value', 'timestamp'])
-        return super().save(*args, **kwargs)
+
 
 class ProjectMetric(models.Model):
     """Model representing metrics associated with projects."""
     meta = models.OneToOneField(ProjectMetricMeta, on_delete=models.CASCADE, primary_key=True)
+    db_id = models.IntegerField(primary_key=True)
     value = models.FloatField()
     timestamp = models.DateTimeField(default=timezone.now)
 
@@ -61,15 +62,21 @@ class ProjectMetric(models.Model):
     def __str__(self):
         return f"{self.meta.project.name} - {self.meta.name} - Metric: {self.value}"
 
+    
     def save(self, *args, **kwargs):
         if not self.value: return super().save(*args, **kwargs)
         
+    
+    def refresh(self):
+        # call external API go get latesst value
+
         self.value *= self.conversion_ratio  # converts metric value to standard unit
         prev = ProjectMetric.objects.values_list('value', flat=True).get(pk=self.pk)  # pull the existing value straight from the DB
         # wrap in a transaction so that both the save and the delta‐log happen atomically
         with transaction.atomic():
             super().save(update_fields=['value', 'timestamp'], *args, **kwargs)
             ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - prev)
+
 
 class ProjectMetricDelta(models.Model):
     """Model representing metrics delta associated with projects."""
@@ -82,6 +89,7 @@ class ProjectMetricDelta(models.Model):
 
     def __str__(self):
         return f"{self.metric.meta.project.name} - {self.name} - Delta: {self.value}"
+
 
 class AggregateMetric(models.Model):
     """Model representing aggregate metrics across multiple projects."""
