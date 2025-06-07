@@ -1,9 +1,10 @@
-import requests, base64, binascii, regen_pb2, json, os
 
-from urllib.request import urlopen
+import requests, base64, binascii, json, os
+
 from dune_client.client import DuneClient
+from metrics.models import ProjectMetric
 
-from .models import ProjectMetric
+from . import regen_pb2
 
 
 def update(pk, value):
@@ -20,7 +21,9 @@ def get_baserow_data(table_id, params):
     else: raise Exception(f"Failed to fetch Baserow data with status {response.status_code}. {response.text}")
 
 
-def load_dune(impact):
+def refresh_dune(impact):
+    # Dune initialization
+    dune = DuneClient(os.getenv('DUNE_KEY'))
     for metric in impact['metrics']:
         query = dune.get_latest_result(metric['query'], max_age_hours=int(metric['max_age']))
         value = round(float(query.result.rows[int(metric['result_index'])][metric['result_key']]), 2)
@@ -28,10 +31,10 @@ def load_dune(impact):
         update(metric['db_id'], value)
 
 
-def load_client(impact):
+def refresh_client(impact):
     if impact['method'] == "POST":
         post_body_json = json.dumps(impact['body'])
-        post_body = json.loads(post_body_json)
+        post_body = json.refreshs(post_body_json)
         response = requests.post(impact['api'], json=post_body)
         metric_data = response.json()[impact['result_key']][impact['result_index']]
 
@@ -68,7 +71,7 @@ def load_client(impact):
                 update(metric['db_id'], round(value, 2))
 
 
-def load_subgraph(impact):
+def refresh_subgraph(impact):
     for metric in impact['metrics']:
         cumulative_value = 0
         for q in metric['query']:
@@ -81,7 +84,7 @@ def load_subgraph(impact):
 
 
 
-def load_graphgl(impact):
+def refresh_graphql(impact):
     result_list = []
 
     if impact['query'] is not None and len(impact['query']) > 0:
@@ -115,7 +118,7 @@ def load_graphgl(impact):
                 update(metric['db_id'], value)
 
 
-def load_regen(impact):
+def refresh_regen(impact):
     denom_list = []
     hex_denom_list = []
     cumulative_retired_amount = 0
@@ -188,14 +191,14 @@ def load_regen(impact):
 
 
 
-def load_near(impact):
+def refresh_near(impact):
     cumulative_value = 0
     post_body_json = json.dumps(impact['body'])
-    post_body = json.loads(json.dumps(impact['body']))
+    post_body = json.refreshs(json.dumps(impact['body']))
     response = requests.post(impact['api'], headers={'Content-Type': 'application/json'}, json=post_body)
     result = response.json()[impact['result_key']][impact['result_index']]
     decoded_response = ''.join([chr(value) for value in result])
-    data = json.loads(decoded_response)
+    data = json.refreshs(decoded_response)
 
     for metric in impact['metrics']:
         for item in data:
@@ -203,22 +206,3 @@ def load_near(impact):
             if metric['denominator'] is not None: value = value / int(metric['denominator'])
             if metric['type'] == "cumulative": cumulative_value += value
     update(metric['db_id'], round(cumulative_value, 2))
-
-
-
-def load():
-    # Dune initialization
-    dune = DuneClient(os.getenv('DUNE_KEY'))
-    impact_data = get_baserow_data('171320', "filter__field_2405062__not_empty&include=Impact Metrics JSON")
-    for json_file in impact_data['results']:
-        json_url = json_file['Impact Metrics JSON'][0]['url']
-        response = urlopen(json_file['Impact Metrics JSON'][0]['url'])
-        data = json.loads(response.read())
-
-        for impact in data['impact_data']:
-            if impact['source'] == "dune": load_dune(impact)
-            if impact['source'] == "client": load_client(impact)
-            if impact['source'] == "subgraph": load_subgraph(impact)
-            if impact['source'] == "graphql": load_graphql(impact)
-            if impact['source'] == "regen": load_regen(impact)
-            if impact['source'] == "near": load_near(impact)

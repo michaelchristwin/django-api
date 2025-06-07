@@ -1,15 +1,5 @@
 from django.contrib import admin
-from .models import Project, Category, ProjectMetric, ProjectMetricMeta, ProjectMetricDelta, AggregateMetric
-
-@admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at', 'updated_at')
-    search_fields = ('name', 'description')
-
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name', 'description')
+from .models import ProjectMetric, ProjectMetricMeta, ProjectMetricDelta, AggregateMetric
 
 @admin.register(ProjectMetricMeta)
 class ProjectMetricMetaAdmin(admin.ModelAdmin):
@@ -34,5 +24,3 @@ class AggregateMetricAdmin(admin.ModelAdmin):
     list_display = ('name', 'aggregation_method')
     filter_horizontal = ('project_metrics', 'categories')
     search_fields = ('name', 'description')
-
-

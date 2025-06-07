@@ -3,22 +3,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Project, Category, ProjectMetric, AggregateMetric
 from .serializers import (
-    ProjectSerializer, 
-    CategorySerializer, 
     ProjectMetricSerializer, 
     AggregateMetricSerializer,
     AggregateMetricDetailSerializer
 )
 
-
-class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
-
-
-class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
 
 class ProjectMetricViewSet(viewsets.ModelViewSet):
     queryset = ProjectMetric.objects.all()

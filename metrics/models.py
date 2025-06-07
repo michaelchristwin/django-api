@@ -1,33 +1,10 @@
 from django.db import models
 from django.utils import timezone
 
+from projects.models import Project, Category
+
 CATEGORIES = ('solar', 'carbon', 'cookstove', 'biodiversity')
 SOURCES = {'client': 'Project supplied', 'dune': 'Dune API', 'graphql': 'Subghraph index', 'near': 'Near blockchain', 'regen': 'Regen blockchain'}
-
-
-class Project(models.Model):
-    """Model representing a project with metadata."""
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    logo_url = models.URLField(blank=True, null=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Category(models.Model):
-    """Model representing categories for metrics."""
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    unit = models.CharField(max_length=10, blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name_plural = "Categories"
 
 
 class ProjectMetricMeta(models.Model):
@@ -37,8 +14,8 @@ class ProjectMetricMeta(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='meta')
     source = models.CharField(max_length=255, default=SOURCES['client'], choices=SOURCES)
     url = models.URLField(max_length=1000)
-    query = model.CharField(max_length=1000)
-    json_key = model.CharField(max_length=1000)
+    query = models.CharField(max_length=1000)
+    json_key = models.CharField(max_length=1000)
     conversion_ratio = models.FloatField()
 
     class Meta:
@@ -50,7 +27,7 @@ class ProjectMetricMeta(models.Model):
 
 class ProjectMetric(models.Model):
     """Model representing metrics associated with projects."""
-    meta = models.OneToOneField(ProjectMetricMeta, on_delete=models.CASCADE, primary_key=True)
+    meta = models.OneToOneField(ProjectMetricMeta, on_delete=models.CASCADE)
     db_id = models.IntegerField(primary_key=True)
     value = models.FloatField()
     timestamp = models.DateTimeField(default=timezone.now)
