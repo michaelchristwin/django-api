@@ -42,17 +42,12 @@ class ProjectMetric(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.value: return super().save(*args, **kwargs)
-        
-    
-    def refresh(self):
-        # call external API go get latesst value
-
-        self.value *= self.conversion_ratio  # converts metric value to standard unit
         prev = ProjectMetric.objects.values_list('value', flat=True).get(pk=self.pk)  # pull the existing value straight from the DB
+        
         # wrap in a transaction so that both the save and the delta‐log happen atomically
         with transaction.atomic():
-            super().save(update_fields=['value', 'timestamp'], *args, **kwargs)
             ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - prev)
+            return super().save(update_fields=['value', 'timestamp'], *args, **kwargs)
 
 
 class ProjectMetricDelta(models.Model):
