@@ -1,7 +1,7 @@
 import json
-
-from django.contrib import admin
 from urllib.request import urlopen
+from django.contrib import admin
+from django.core.exceptions import ObjectDoesNotExist
 
 from .utils import get_baserow_data
 from .models import Source
@@ -16,8 +16,12 @@ def refresh(modeladmin, request, queryset):
         data = json.loads(response.read())
 
         for impact in data['impact_data']:
-            source = queryset.get(name=impact['source'])
-            source.refresh()
+            try: 
+                source = queryset.get(name=impact['source'])
+                source.refresh()
+            except ObjectDoesNotExist:
+                print('Did not find source - '+impact['source'])
+                continue
 
 
 @admin.register(Source)
