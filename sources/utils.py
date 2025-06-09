@@ -13,9 +13,9 @@ def update(pk, value):
     metric.save()
 
 
-def get_baserow_data(table_id, params):
-    url = baserow_api + table_id + "/?user_field_names=true&" + params
-    headers = {'Authorization': baserow_token, 'Content-Type' : 'application/json'}
+def get_baserow_impact_data():
+    url = 'https://api.baserow.io/api/database/rows/table/171320/?user_field_names=true&filter__field_2405062__not_empty&include=Impact Metrics JSON'
+    headers = {'Authorization': os.getenv('BASEROW_KEY'), 'Content-Type' : 'application/json'}
     response = requests.get(url, headers=headers)
     if response.status_code == 200: return response.json()
     else: raise Exception(f"Failed to fetch Baserow data with status {response.status_code}. {response.text}")
@@ -75,7 +75,7 @@ def refresh_subgraph(impact):
     for metric in impact['metrics']:
         cumulative_value = 0
         for q in metric['query']:
-            response = requests.post(impact['api'].replace('{api_key}', os.getenv('SUBGRAPH_API_KEY')) + q, json={'query': metric["graphql"]})
+            response = requests.post(impact['api'].replace('{api_key}', os.getenv('SUBGRAPH_KEY')) + q, json={'query': metric["graphql"]})
             if response.status_code == 200:
                 result = response.json()['data'][impact['result_key']]
                 for r in result: 

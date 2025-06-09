@@ -9,7 +9,7 @@ from .models import Source
 
 @admin.action(description='Refresh impact metrics from source')
 def refresh(modeladmin, request, queryset):
-    impact_data = get_baserow_data('171320', "filter__field_2405062__not_empty&include=Impact Metrics JSON")
+    impact_data = get_baserow_impact_data()
     for json_file in impact_data['results']:
         json_url = json_file['Impact Metrics JSON'][0]['url']
         response = urlopen(json_file['Impact Metrics JSON'][0]['url'])
