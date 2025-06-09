@@ -3,7 +3,7 @@ from urllib.request import urlopen
 from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
 
-from .utils import get_baserow_data
+from .utils import get_baserow_impact_data
 from .models import Source
 
 
