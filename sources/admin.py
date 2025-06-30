@@ -11,17 +11,12 @@ from .models import Source
 def refresh(modeladmin, request, queryset):
     impact_data = get_baserow_impact_data()
     for json_file in impact_data['results']:
-        json_url = json_file['Impact Metrics JSON'][0]['url']
         response = urlopen(json_file['Impact Metrics JSON'][0]['url'])
         data = json.loads(response.read())
 
         for impact in data['impact_data']:
-            try: 
-                source = queryset.get(name=impact['source'])
-                source.refresh()
-            except ObjectDoesNotExist:
-                print('Did not find source - '+impact['source'])
-                continue
+            try: queryset.get(name=impact['source']).refresh()
+            except ObjectDoesNotExist: print('Did not find source - '+impact['source'])
 
 
 @admin.register(Source)
