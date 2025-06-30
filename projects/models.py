@@ -2,7 +2,6 @@ from django.db import models
 from django.utils import timezone
 
 CATEGORIES = ('solar', 'carbon', 'cookstove', 'biodiversity')
-SOURCES = {'client': 'Project supplied', 'dune': 'Dune API', 'graphql': 'Subghraph index', 'near': 'Near blockchain', 'regen': 'Regen blockchain'}
 
 
 class Project(models.Model):
