@@ -75,7 +75,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # or whatever your frontend origin is
-    "https://carboncopy-impact-dashboard.vercel.app/",
+    "https://carboncopy-impact-dashboard.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # if you're sending cookies or auth headers
