@@ -40,14 +40,14 @@ class ProjectMetric(models.Model):
 
     def save(self, *args, **kwargs):
         # Check if this instance already exists in the DB
-        if self._state.adding:
-            return super().save(*args, **kwargs)
-        old = ProjectMetric.objects.only("value").get(pk=self.pk)
-        if old.value != self.value:
-            with transaction.atomic():
-                ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - old.value, timestamp=self.timestamp)
-                self.timestamp = timezone.now()
-                return super().save(update_fields=["value", "timestamp"], *args, **kwargs)
+        if not self._state.adding:
+            old = ProjectMetric.objects.only("value").get(pk=self.pk)
+            if old.value != self.value:
+                with transaction.atomic():
+                    ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - old.value, timestamp=self.timestamp)
+                    self.timestamp = timezone.now()
+                    return super().save(update_fields=["value", "timestamp"], *args, **kwargs)
+        return super().save(*args, **kwargs)
 
 
 class ProjectMetricDelta(models.Model):
