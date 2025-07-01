@@ -38,18 +38,16 @@ class ProjectMetric(models.Model):
     def __str__(self):
         return f"{self.meta.project.name} - {self.meta.name} - Metric: {self.value}"
 
-    
     def save(self, *args, **kwargs):
-        if not self.value: return super().save(*args, **kwargs)
-        try:
-            prev = ProjectMetric.objects.values_list('value', flat=True).get(pk=self.pk)  # pull the existing value straight from the DB
-            # wrap in a transaction so that both the save and the delta‐log happen atomically
+        # Check if this instance already exists in the DB
+        if self._state.adding:
+            return super().save(*args, **kwargs)
+        old = ProjectMetric.objects.only("value").get(pk=self.pk)
+        if old.value != self.value:
             with transaction.atomic():
-                ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - prev)
-                return super().save(update_fields=['value', 'timestamp'], *args, **kwargs)
-        except ProjectMetric.DoesNotExist:
-            # If the metric does not exist, create a new one    
-            return super().save(update_fields=['value', 'timestamp'], *args, **kwargs)
+                ProjectMetricDelta.objects.create(meta=self.meta, value=self.value - old.value, timestamp=self.timestamp)
+                self.timestamp = timezone.now()
+                return super().save(update_fields=["value", "timestamp"], *args, **kwargs)
 
 
 class ProjectMetricDelta(models.Model):
