@@ -33,7 +33,6 @@ DEBUG = False
 # Application definition
 
 INSTALLED_APPS = [
-<<<<<<< HEAD
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,20 +45,6 @@ INSTALLED_APPS = [
     'projects',
     'sources',
      'corsheaders',
-=======
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    "drf_spectacular",
-    "rest_framework",
-    "metrics",
-    "projects",
-    "sources",
-=======
->>>>>>> cd179e4 (Removed CORS settings)
 ]
 
 MIDDLEWARE = [
