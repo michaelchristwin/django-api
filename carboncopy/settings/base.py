@@ -58,12 +58,11 @@ INSTALLED_APPS = [
     "metrics",
     "projects",
     "sources",
-    "corsheaders",
->>>>>>> a64eaef (Added cors)
+=======
+>>>>>>> cd179e4 (Removed CORS settings)
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -72,13 +71,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # or whatever your frontend origin is
-    "https://carboncopy-impact-dashboard.vercel.app",
-]
-
-CORS_ALLOW_CREDENTIALS = True  # if you're sending cookies or auth headers
 
 ROOT_URLCONF = "carboncopy.urls"
 
