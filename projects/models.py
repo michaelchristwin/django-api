@@ -1,11 +1,23 @@
 from django.db import models
 from django.utils import timezone
 
-CATEGORIES = ('solar', 'carbon', 'cookstove', 'biodiversity')
+CATEGORIES = {
+    "grants": "Grants to Impact Projects",
+    "investments": "Investments in Impact Projects",
+    "waste": "Waste Collected",
+    "wasteX": "Waste Collection Action",
+    "bridged-cred": "Ecological Credits Bridged",
+    "retired-cred": "Onchain credits retired",
+    "issued-cred": "Onchain Credits Issued",
+    "borrowers": "Borrowers",
+    "renewable": "Energy Generated",
+    "ubi": "UBI distributed",
+}
 
 
 class Project(models.Model):
     """Model representing a project with metadata."""
+
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     logo_url = models.URLField(blank=True, null=True)
@@ -18,14 +30,11 @@ class Project(models.Model):
 
 class Category(models.Model):
     """Model representing categories for metrics."""
-    name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True, null=True)
-    unit = models.CharField(max_length=10, blank=True, null=True)
+
+    name = models.CharField(max_length=255, choices=CATEGORIES, primary_key=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name_plural = "Categories"
-
-
