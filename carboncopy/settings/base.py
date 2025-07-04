@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'metrics',
     'projects',
-    'sources'
+    'sources',
+     'corsheaders',
 ]
 
 MIDDLEWARE = [
