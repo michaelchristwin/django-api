@@ -122,7 +122,7 @@ class AggregateMetric(models.Model):
         # Apply category filter if categories are specified
         if self.categories.exists():
             category_ids = self.categories.values_list("id", flat=True)
-            metrics = metrics.filter(category_id__in=category_ids)
+            metrics = metrics.filter(category__in=category_ids)
 
         if not metrics.exists():
             return 0
